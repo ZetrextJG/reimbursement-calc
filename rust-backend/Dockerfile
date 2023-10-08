@@ -5,6 +5,7 @@ WORKDIR /app
 
 # Accept the build argument
 ARG DATABASE_URL
+ARG API_PORT
 
 # Make sure to use the ARG in ENV
 ENV DATABASE_URL=$DATABASE_URL

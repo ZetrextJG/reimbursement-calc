@@ -1,16 +1,18 @@
 version: '3.9'
 
 services:
-  rustapp:
+  backend:
     container_name: rust-backend
     build:
       context: .
       dockerfile: Dockerfile
       args:
         DATABASE_URL: postgres://postgres:postgres@db:15432/postgres
-        API_PORT: 8080
+        API_PORT: 8050
+    volumes:
+      - backend-cache:/app/target
     ports:
-      - '8080:8080'
+      - '8050:8050'
     depends_on:
       - db
 
@@ -27,4 +29,5 @@ services:
       - pgdata:/var/lib/postgresql/data
 
 volumes:
+  backend-cache: {}
   pgdata: {}
