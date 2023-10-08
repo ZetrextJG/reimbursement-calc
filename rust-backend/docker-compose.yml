@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  rustapp:
+    container_name: rust-backend
+    image: zetrext/rust-backend:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgres://postgres:postgres@db:15432/postgres
+        API_PORT: 8080
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: 'postgres:16'
+    ports:
+      - '15432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata: {}
