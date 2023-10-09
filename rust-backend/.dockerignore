@@ -1,2 +1,3 @@
 **/target
 Cargo.lock
+./migrations/20231008230808_dummy_data.sql
