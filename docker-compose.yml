@@ -2,56 +2,26 @@ name: reimburstment-calc
 version: '3.9'
 
 services:
-  frontend:
-    container_name: svelte-frontend
-    build:
-      context: svelte-frontend
-    networks:
-      - client-side
-    ports:
-      - 80:3000
-    depends_on:
-      - backend
-      - db
-
-  backend:
-    container_name: rust-backend
-    build:
-      context: rust-backend
-      dockerfile: Dockerfile
-      args:
-        DATABASE_URL: postgres://postgres:postgres@db:15432/postgres
-        API_PORT: 8050
-    networks:
-      - client-side
-      - server-side
-    volumes:
-      - backend-cache:/app/target
-    ports:
-      - '8050:8050'
-    depends_on:
-      - db
-
   db:
     container_name: db
     image: 'postgres:16'
+    restart: always
     environment:
+      - POSTGRES_DB=calc
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
     networks:
-      - server-side
+      - db-network
     ports:
-      - '15432:5432'
+      - '6500:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-
 networks:
-  client-side: {}
-  server-side: {}
+  db-network:
+    driver: bridge
 
 volumes:
-  backend-cache: {}
-  pgdata: {}
+  pgdata: 
+    driver: local
 

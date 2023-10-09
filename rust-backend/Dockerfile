@@ -1,27 +1,25 @@
-# Build stage
-FROM rust:1.72-buster as builder
-
+# Leveraging the pre-built Docker images with
+# cargo-chef and the Rust toolchain
+FROM lukemathwalker/cargo-chef:latest-rust-1.72.0 AS chef
 WORKDIR /app
 
-# Accept the build argument
-ARG DATABASE_URL
-ARG API_PORT
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Make sure to use the ARG in ENV
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+# Build dependencies - this is the caching Docker layer!
+RUN cargo chef cook --recipe-path recipe.json
+
+
 ENV DATABASE_URL=$DATABASE_URL
 ENV API_PORT=$API_PORT
 
-# Copy the source code
 COPY . .
-
-# Build the application
 RUN cargo build --release
 
-# Production stage
-FROM debian:buster-slim
+FROM rust:1.72-slim AS rust-backend
 
-WORKDIR /usr/local/bin
-
-COPY --from=builder /app/target/release/rust-backend .
-
-CMD ["./rust-backend"]
+COPY --from=builder /app/target/release/rust-backend /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/rust-backend"]

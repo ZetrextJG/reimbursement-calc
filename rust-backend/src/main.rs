@@ -6,6 +6,7 @@ use axum::{
 use axum_error::Result;
 use bigdecimal::BigDecimal;
 use lazy_static::lazy_static;
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, PgPool, Pool, Postgres};
 use std::{net::SocketAddr, sync::Arc};
@@ -33,16 +34,19 @@ struct Item {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    println!("Connecting to database at {}", DB_URL);
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(DB_URL)
         .await?;
 
+    println!("Setting up the app");
     let app = Router::new()
         .route("/", get(index))
         .route("/record", get(record))
         .with_state(pool);
 
+    println!("Starting server on port {}", *API_PORT);
     let address = SocketAddr::from(([0, 0, 0, 0], *API_PORT));
     axum::Server::bind(&address)
         .serve(app.into_make_service())
@@ -56,15 +60,14 @@ async fn index() -> String {
     format!("Hello world")
 }
 
-async fn record(State(pool): State<PgPool>) -> Result<Json<Item>> {
+async fn record(State(pool): State<PgPool>) -> Result<Json<Vec<Item>>> {
     let item = sqlx::query_as!(
         Item,
         r#"
         SELECT * FROM items
-        LIMIT 1
         "#
     )
-    .fetch_one(&pool)
+    .fetch_all(&pool)
     .await?;
     Ok(Json(item))
 }
