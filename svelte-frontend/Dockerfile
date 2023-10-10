@@ -12,6 +12,6 @@ COPY . ./
 ENV NODE_ENV production
 RUN npm run build
 
-EXPOSE 3000
-CMD ["node", "./build"]
+FROM nginx:1.19-alpine
+COPY --from=build /app/build /usr/share/nginx/html
 
