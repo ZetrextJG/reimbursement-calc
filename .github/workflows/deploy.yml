@@ -18,7 +18,7 @@ jobs:
       - name: Build integration tests
         run: >
           docker-compose -f docker-compose.integration.yml build
-            --build-arg "PROD_DB=${{ secrets.PROD_DB_TUNNEL }}""
+            --build-arg "PROD_DB=${{ secrets.PROD_DB_TUNNEL }}"
       - name: Run integration tests
         run: >
           docker-compose -f docker-compose.integration.yml up 
