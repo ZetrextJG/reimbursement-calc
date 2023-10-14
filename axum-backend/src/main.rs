@@ -25,6 +25,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/users_count", get(handlers::users_count))
         .route("/users", get(handlers::users))
         .route("/register_user", get(handlers::register_user))
+        .route("/categories", get(handlers::categories))
         .with_state(pool);
 
     println!("Listening at {}", &addr);

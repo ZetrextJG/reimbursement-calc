@@ -104,3 +104,13 @@ pub async fn register_user(
 
     Ok(Json(response))
 }
+
+pub async fn categories(
+    extract::State(pool): extract::State<sqlx::PgPool>,
+) -> Result<Json<Vec<models::Category>>, StatusCode> {
+    let categories = sqlx::query_as!(models::Category, "SELECT * FROM categories")
+        .fetch_all(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(categories))
+}
