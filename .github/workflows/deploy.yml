@@ -16,13 +16,13 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_AUTH_TOKEN }}
       - name: Build integration tests
-        run: |
-          docker-compose -f "docker-compose.integration.yml" up --build \
-            --build-arg PROD_DB=${{ secrets.PROD_DB_TUNNEL }}
+        run: >
+          docker-compose -f docker-compose.integration.yml up --build
+            --build-arg "PROD_DB=${{ secrets.PROD_DB_TUNNEL }}"
       - name: Run integration tests
-        run: |
-          docker-compose -f "docker-compose.integration.yml" up \
-            --abort-on-container-exit \
+        run: >
+          docker-compose -f docker-compose.integration.yml up 
+            --abort-on-container-exit 
             --exit-code-from frontend
       - name: Build deployment images
         run: |
