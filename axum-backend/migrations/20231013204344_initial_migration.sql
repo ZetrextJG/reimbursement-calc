@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS categories (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name VARCHAR(100) UNIQUE NOT NULL,
   reimburstment_percentage DECIMAL(5,2) NOT NULL,
-  max_reimbursement NUMERIC NOT NULL
+  max_reimburstment NUMERIC NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS claims (

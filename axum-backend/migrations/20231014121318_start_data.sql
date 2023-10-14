@@ -2,7 +2,7 @@ INSERT INTO users ( mail, username, password_hash ) VALUES (
   'dummy@email.com', 'dummy', 'impossible'
 );
 
-INSERT INTO categories ( name, reimburstment_percentage, max_reimbursement ) VALUES (
+INSERT INTO categories ( name, reimburstment_percentage, max_reimburstment ) VALUES (
   'Taxi', 80.00, 100.00
 );
 
