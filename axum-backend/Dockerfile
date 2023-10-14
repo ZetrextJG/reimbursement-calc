@@ -27,7 +27,7 @@ RUN cargo build --release
 FROM builder AS test
 CMD ["cargo", "test"]
 
-FROM rust:1.72.1-slim AS integration
+FROM debian:bookworm-slim AS integration
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
@@ -37,7 +37,7 @@ ENV PORT=$PORT
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]
 
-# Deploy
-FROM rust:1.72.1-slim AS deployment
+FROM debian:bookworm-slim AS deployment
+WORKDIR /app
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]

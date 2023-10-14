@@ -12,6 +12,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let addr = format!("0.0.0.0:{}", port);
 
     let database_url = std::env::var("DATABASE_URL").expect("Missing DATABASE_URL env variable");
+    println!("{}", database_url);
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
