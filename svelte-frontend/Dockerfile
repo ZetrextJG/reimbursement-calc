@@ -12,6 +12,12 @@ COPY . ./
 ENV NODE_ENV production
 RUN npm run build
 
-FROM nginx:1.19-alpine
+FROM build AS test
+CMD ["npm", "run", "test", "--" ,"--run"]
+
+FROM build AS integration
+CMD ["npm", "run", "test", "--" ,"--run"]
+
+FROM nginx:1.19-alpine AS deployment
 COPY --from=build /app/build /usr/share/nginx/html
 

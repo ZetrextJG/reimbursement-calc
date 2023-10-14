@@ -1,0 +1,16 @@
+name: reimburstment-calc
+version: '3.9'
+
+services:
+  frontend:
+    container_name: svelte-frontend
+    build:
+      context: svelte-frontend
+      target: test
+
+  backend:
+    container_name: axum-backend
+    build:
+      context: axum-backend
+      dockerfile: Dockerfile
+      target: test

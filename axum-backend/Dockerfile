@@ -15,7 +15,27 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --recipe-path recipe.json
 
 COPY . .
+
+ARG PROD_DB
+RUN if [[ -z "${PROD_DB}" ]]; \
+    then export SQLX_OFFLINE=true; \
+    else export DATABASE_URL=$PROD_DB; \
+    fi
+
 RUN cargo build --release
+
+FROM builder AS test
+CMD ["cargo", "test"]
+
+FROM rust:1.72.1-slim AS integration
+
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+ARG PORT
+ENV PORT=$PORT
+
+COPY --from=builder /app/target/release/axum-backend /usr/local/bin
+ENTRYPOINT ["/usr/local/bin/axum-backend"]
 
 # Deploy
 FROM rust:1.72.1-slim AS deployment

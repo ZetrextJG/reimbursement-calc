@@ -1,0 +1,49 @@
+name: reimburstment-calc
+version: '3.9'
+
+services:
+  frontend:
+    container_name: svelte-frontend
+    build:
+      context: svelte-frontend
+      target: integration
+    networks:
+      - client-side
+    ports:
+      - 80:80
+    depends_on:
+      - backend
+      - db
+
+  backend:
+    container_name: axum-backend
+    build:
+      context: axum-backend
+      dockerfile: Dockerfile
+      target: integration
+      args:
+        DATABASE_URL: postgres://postgres:postgres@db/postgres
+        PORT: 8080
+    networks:
+      - client-side
+      - server-side
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: 'postgres:16'
+    restart: always
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - server-side
+
+networks:
+  client-side: {}
+  server-side: {}
+
