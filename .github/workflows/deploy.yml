@@ -23,9 +23,13 @@ jobs:
         run: |
           flyctl deploy --build-only --build-arg "PROD_DB=${{ secrets.PROD_DB_TUNNEL }}" ./axum-backend
           flyctl deploy --build-only ./svelte-frontend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_AUTH_TOKEN }}
       - name: Deploying the app
         run: |
           flyctl deploy --build-arg "PROD_DB=${{ secrets.PROD_DB_TUNNEL }}" ./axum-backend --env "PORT=8080"
           flyctl deploy ./svelte-frontend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_AUTH_TOKEN }}
 
 
