@@ -35,9 +35,11 @@ ARG PORT
 ENV PORT=$PORT
 
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
+COPY ./.env /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]
 
 FROM debian:bookworm-slim AS deployment
 WORKDIR /app
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
+COPY ./.env /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]
