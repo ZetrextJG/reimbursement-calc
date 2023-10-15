@@ -22,7 +22,6 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let _ = dotenv::dotenv().ok();
     let _ = dotenv::from_filename(".env.priv");
     let config = Config::init();
 

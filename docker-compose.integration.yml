@@ -20,7 +20,9 @@ services:
       target: integration
       args:
         DATABASE_URL: postgres://postgres:postgres@db/postgres
-        PORT: 8080
+        JWT_SECRET: fake_secret
+        SMTP_USERNAME: username
+        SMTP_PASSWORD: password
     networks:
       - client-side
       - server-side

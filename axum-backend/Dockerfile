@@ -31,15 +31,17 @@ FROM debian:bookworm-slim AS integration
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
-ARG PORT
-ENV PORT=$PORT
+ARG JWT_SECRET
+ENV JWT_SECRET=$JWT_SECRET
+ARG SMTP_USERNAME
+ENV SMTP_USERNAME=$SMPT_USERNAME
+ARG SMTP_PASSWORD
+ENV SMTP_PASSWORD=$SMPT_PASSWORD
 
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
-COPY ./.env /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]
 
 FROM debian:bookworm-slim AS deployment
 WORKDIR /app
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
-COPY ./.env /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]
