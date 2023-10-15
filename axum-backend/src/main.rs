@@ -6,6 +6,8 @@ pub mod models;
 mod route;
 pub mod utils;
 
+use std::sync::Arc;
+
 use axum::http::{header, HeaderValue, Method};
 use sqlx::postgres::PgPoolOptions;
 use tower_http::cors::CorsLayer;
@@ -38,10 +40,10 @@ async fn main() -> Result<(), anyhow::Error> {
         .allow_credentials(true)
         .allow_headers([header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE]);
 
-    let app_state = AppState {
+    let app_state = Arc::new(AppState {
         pool,
         config: config.clone(),
-    };
+    });
     let app = create_router(app_state).layer(cors);
 
     let addr = format!("0.0.0.0:{}", config.port);

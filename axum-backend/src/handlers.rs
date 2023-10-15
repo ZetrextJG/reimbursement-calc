@@ -1,29 +1,78 @@
+use std::sync::Arc;
+
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHasher};
-use axum::http::StatusCode;
-use axum::{extract, Json};
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use axum::http::{header, Response, StatusCode};
+use axum::response::IntoResponse;
+use axum::{extract, Extension, Json};
 use rand::rngs::OsRng;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use validator::Validate;
 
-use crate::utils::generate_random_string;
-use crate::{forms, models, AppState};
+use crate::forms::LoginForm;
+use crate::jwt_auth::{create_cookie_with_token, create_empty_cookie, create_new_auth_token};
+use crate::models::{BasicUserInfo, Category, Role, User};
+use crate::{forms, AppState};
+
+type ErrorResponse = (StatusCode, &'static str);
+
+macro_rules! error_response {
+    ($status_code: expr) => {
+        ($status_code, "")
+    };
+    ($status_code: expr, $message: expr) => {
+        ($status_code, $message)
+    };
+}
+
+macro_rules! bad_request {
+    ($message: expr) => {
+        error_response!(StatusCode::BAD_REQUEST, $message)
+    };
+}
+
+macro_rules! success_response {
+    () => {
+        Response::new(json!({"status": "success"}).to_string())
+    };
+    ($data: expr) => {
+        Response::new(json!({"status": "success", "data": $data}).to_string())
+    };
+}
 
 pub async fn health() -> &'static str {
     "pong"
 }
+
+const DATABASE_ERROR: ErrorResponse = error_response!(
+    StatusCode::INTERNAL_SERVER_ERROR,
+    "Database error. Please try again later"
+);
+
+pub async fn list_categories(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+) -> Result<Json<Vec<Category>>, ErrorResponse> {
+    let categories = sqlx::query_as!(Category, "SELECT * FROM categories")
+        .fetch_all(&app_state.pool)
+        .await
+        .map_err(|_| DATABASE_ERROR)?;
+    Ok(Json(categories))
+}
+
 #[derive(Debug, Serialize)]
 pub struct UsersCount {
     count: i64,
 }
 
 pub async fn users_count(
-    extract::State(app_state): extract::State<AppState>,
-) -> Result<Json<UsersCount>, StatusCode> {
+    extract::State(app_state): extract::State<Arc<AppState>>,
+) -> Result<Json<UsersCount>, ErrorResponse> {
     let users_count = sqlx::query_scalar!("SELECT COUNT(*) FROM users")
         .fetch_one(&app_state.pool)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|_| DATABASE_ERROR)?
         .unwrap_or(0);
     Ok(Json(UsersCount { count: users_count }))
 }
@@ -34,38 +83,42 @@ pub struct FetchUsers {
     offset: Option<i64>,
 }
 
-pub async fn users(
-    extract::State(app_state): extract::State<AppState>,
+pub async fn users_list(
+    extract::State(app_state): extract::State<Arc<AppState>>,
     extract::Query(query): extract::Query<FetchUsers>,
-) -> Result<Json<Vec<models::User>>, StatusCode> {
+) -> Result<Json<Vec<BasicUserInfo>>, ErrorResponse> {
     let limit = query.limit.unwrap_or(10);
     if !(0..=100).contains(&limit) {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(bad_request!("Limit must be between 0 and 100"));
     }
     let offset = query.offset.unwrap_or(0);
+    if offset < 0 {
+        return Err(bad_request!("Offset must be greater than 0"));
+    }
     let users = sqlx::query_as!(
-        models::User,
-        "SELECT * FROM users LIMIT $1 OFFSET $2",
+        BasicUserInfo,
+        "SELECT id, username, role, verified, created_at FROM users LIMIT $1 OFFSET $2",
         limit,
         offset
     )
     .fetch_all(&app_state.pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|_| DATABASE_ERROR)?;
     Ok(Json(users))
 }
 
 #[derive(Debug, Serialize)]
-pub struct RegisterUserResponse {
+pub struct BasicResponse {
     status: &'static str,
     message: String,
 }
 
 pub async fn register_user(
-    extract::State(app_state): extract::State<AppState>,
+    extract::State(app_state): extract::State<Arc<AppState>>,
     extract::Json(body): extract::Json<forms::SignupForm>,
-) -> Result<Json<RegisterUserResponse>, StatusCode> {
-    body.validate().map_err(|_| StatusCode::BAD_REQUEST)?;
+) -> Result<Json<BasicResponse>, ErrorResponse> {
+    body.validate()
+        .map_err(|_| bad_request!("Form failed validation"))?;
 
     sqlx::query_scalar!(
         "SELECT EXISTS(SELECT 1 FROM users WHERE mail = $1 OR username = $2)",
@@ -74,19 +127,19 @@ pub async fn register_user(
     )
     .fetch_one(&app_state.pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-    .ok_or(StatusCode::CONFLICT)?;
+    .map_err(|_| DATABASE_ERROR)?
+    .ok_or(error_response!(StatusCode::CONFLICT, "User already exists"))?;
 
     let salt = SaltString::generate(&mut OsRng);
     let hashed_password = Argon2::default()
         .hash_password(body.password.as_bytes(), &salt)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .map_err(|_| error_response!(StatusCode::INTERNAL_SERVER_ERROR, "Hash method failed"))
         .map(|hash| hash.to_string())?;
 
     // TODO: Implement verification email
     // let verification_code = generate_random_string(10);
     let user = sqlx::query_as!(
-        models::User,
+        User,
         "INSERT INTO users ( mail, username, password_hash ) VALUES ($1, $2, $3) RETURNING *",
         body.mail.to_owned().to_ascii_lowercase(),
         body.username,
@@ -94,9 +147,9 @@ pub async fn register_user(
     )
     .fetch_one(&app_state.pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|_| DATABASE_ERROR)?;
 
-    let response = RegisterUserResponse {
+    let response = BasicResponse {
         status: "success",
         // TODO: Change that to add info about email verification code
         message: format!("User {} successfully registered", user.username),
@@ -105,12 +158,202 @@ pub async fn register_user(
     Ok(Json(response))
 }
 
-pub async fn categories(
-    extract::State(app_state): extract::State<AppState>,
-) -> Result<Json<Vec<models::Category>>, StatusCode> {
-    let categories = sqlx::query_as!(models::Category, "SELECT * FROM categories")
-        .fetch_all(&app_state.pool)
+pub async fn login_user(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    Json(body): Json<LoginForm>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    let user: User = sqlx::query_as!(
+        User,
+        "SELECT * FROM users WHERE username = $1",
+        body.username
+    )
+    .fetch_optional(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?
+    .ok_or(bad_request!("Username or password dont match"))?;
+
+    // TODO; Check if user is verified
+    let is_password_correct = match PasswordHash::new(&user.password_hash) {
+        Ok(parsed_hash) => Argon2::default()
+            .verify_password(body.password.as_bytes(), &parsed_hash)
+            .map_or(false, |_| true),
+        Err(_) => false,
+    };
+
+    if !is_password_correct {
+        return Err(bad_request!("Username or password dont match"));
+    }
+
+    let token = create_new_auth_token(app_state.config.jwt_secret.clone(), user.id)
+        .map_err(|status_code| error_response!(status_code))?;
+    // Create a response with the access token and set it as a cookie
+    let cookie = create_cookie_with_token(token.clone());
+
+    let mut response = success_response!(json!({"token": token}));
+    response
+        .headers_mut()
+        .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
+    Ok(response)
+}
+
+pub async fn logout_user() -> Result<impl IntoResponse, ErrorResponse> {
+    let cookie = create_empty_cookie();
+    let mut response = success_response!();
+    response
+        .headers_mut()
+        .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
+    Ok(response)
+}
+
+pub async fn users_me(
+    extract::Extension(user): extract::Extension<User>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    let user_info: BasicUserInfo = user.into();
+    Ok(Json(user_info))
+}
+
+pub async fn users_delete_account(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(user): extract::Extension<User>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    sqlx::query!("DELETE FROM users WHERE id = $1", user.id)
+        .execute(&app_state.pool)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(categories))
+        .map_err(|_| DATABASE_ERROR)?;
+    Ok(success_response!())
+}
+
+pub async fn make_manager(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(admin): extract::Extension<User>,
+    extract::Path(user_id): extract::Path<i32>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    if admin.role < Role::Admin {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "You must be an admin to perform this action"
+        ));
+    }
+    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", user_id)
+        .fetch_optional(&app_state.pool)
+        .await
+        .map_err(|_| DATABASE_ERROR)?
+        .ok_or(error_response!(
+            StatusCode::NOT_FOUND,
+            "User with this id does not exist"
+        ))?;
+    if user.role >= Role::Manager {
+        return Err(error_response!(
+            StatusCode::CONFLICT,
+            "User is already a manager"
+        ));
+    }
+    sqlx::query!(
+        "UPDATE users SET role = $1 WHERE id = $2",
+        Role::Manager.to_string(),
+        user_id
+    )
+    .execute(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+
+    Ok(success_response!())
+}
+
+pub async fn create_category(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(admin): extract::Extension<User>,
+    extract::Json(body): extract::Json<forms::CategoryForm>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    if admin.role < Role::Admin {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "You must be an admin to perform this action"
+        ));
+    }
+
+    let category = sqlx::query_as!(
+        Category,
+        "INSERT INTO categories ( name, reimburstment_percentage, max_reimburstment ) VALUES ($1, $2, $3) RETURNING *",
+        body.name,
+        body.reimburstment_percentage,
+        body.max_reimburstment
+    )
+        .fetch_optional(&app_state.pool)
+        .await
+        .map_err(|_| DATABASE_ERROR)?
+        .ok_or(error_response!(
+            StatusCode::CONFLICT,
+            "Category with this name already exists"
+        ))?;
+
+    Ok(success_response!(category))
+}
+
+pub async fn delete_category(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(admin): extract::Extension<User>,
+    extract::Path(category_id): extract::Path<i32>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    if admin.role < Role::Admin {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "You must be an admin to perform this action"
+        ));
+    }
+
+    let category = sqlx::query_as!(
+        Category,
+        "DELETE FROM categories WHERE id = $1 RETURNING *",
+        category_id
+    )
+    .fetch_optional(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?
+    .ok_or(error_response!(
+        StatusCode::NOT_FOUND,
+        "Category with this id does not exist"
+    ))?;
+
+    Ok(success_response!(category))
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateCategory {
+    reimburstment_percentage: Option<Decimal>,
+    max_reimburstment: Option<Decimal>,
+}
+
+pub async fn update_category(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(admin): extract::Extension<User>,
+    extract::Path(category_id): extract::Path<i32>,
+    extract::Query(updates): extract::Query<UpdateCategory>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    if admin.role < Role::Admin {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "You must be an admin to perform this action"
+        ));
+    }
+
+    let category = sqlx::query_as!(
+        Category,
+        "UPDATE categories 
+        SET reimburstment_percentage = COALESCE($1, reimburstment_percentage), max_reimburstment = COALESCE($2, max_reimburstment) 
+        WHERE id = $3
+        RETURNING *",
+        updates.reimburstment_percentage,
+        updates.max_reimburstment,
+        category_id
+    )
+    .fetch_optional(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?
+    .ok_or(error_response!(
+        StatusCode::NOT_FOUND,
+        "Category with this id does not exist"
+    ))?;
+
+    Ok(success_response!(category))
 }

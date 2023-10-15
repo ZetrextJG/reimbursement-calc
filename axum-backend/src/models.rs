@@ -20,7 +20,17 @@ impl From<String> for Role {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+impl ToString for Role {
+    fn to_string(&self) -> String {
+        match self {
+            Role::User => "User".to_string(),
+            Role::Manager => "Manager".to_string(),
+            Role::Admin => "Admin".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: i32,
     pub mail: String,
@@ -35,14 +45,39 @@ pub struct User {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct BasicUserInfo {
+    pub id: i32,
+    pub username: String,
+    pub role: Role,
+    pub verified: bool,
+    #[serde(rename = "createdAt")]
+    pub created_at: NaiveDateTime,
+}
+
+impl From<User> for BasicUserInfo {
+    fn from(user: User) -> Self {
+        BasicUserInfo {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            verified: user.verified,
+            created_at: user.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JWTokenClaims {
-    pub sub: String,
+    /// Subscriber (user id)
+    pub sub: i32,
+    /// Current time
     pub iat: usize,
+    /// Expiration time
     pub exp: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Category {
     pub id: i32,
     pub name: String,
@@ -52,7 +87,7 @@ pub struct Category {
     pub max_reimburstment: Decimal,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Item {
     pub id: i32,
     pub claim_id: i32,
@@ -61,15 +96,37 @@ pub struct Item {
     pub reimburstment: Decimal,
 }
 
-#[derive(Debug, Serialize, Deserialize, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumString)]
 pub enum ClaimStatus {
     Pending,
     Accepted,
     Rejected,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claim {
     pub user_id: i32,
     pub status: ClaimStatus,
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_role_from_string() {
+        assert_eq!(Role::from("User".to_string()), Role::User);
+        assert_eq!(Role::from("Manager".to_string()), Role::Manager);
+        assert_eq!(Role::from("Admin".to_string()), Role::Admin);
+        assert_eq!(Role::from("".to_string()), Role::User);
+    }
+
+    #[test]
+    fn test_compare_roles() {
+        assert!(Role::User == Role::User);
+        assert!(Role::Manager == Role::Manager);
+        assert!(Role::Admin == Role::Admin);
+
+        assert!(Role::User < Role::Manager);
+        assert!(Role::Manager < Role::Admin);
+    }
 }
