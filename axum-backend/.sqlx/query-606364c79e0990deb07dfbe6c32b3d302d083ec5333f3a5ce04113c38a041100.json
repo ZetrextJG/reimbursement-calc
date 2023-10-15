@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM users LIMIT $1 OFFSET $2",
+  "query": "SELECT * FROM users WHERE username = $1",
   "describe": {
     "columns": [
       {
@@ -46,8 +46,7 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8"
+        "Text"
       ]
     },
     "nullable": [
@@ -61,5 +60,5 @@
       false
     ]
   },
-  "hash": "a68d3d2d8a0a8080e8d55dd728b0f7a67066d59a0809c540e6315294da6c8ac3"
+  "hash": "606364c79e0990deb07dfbe6c32b3d302d083ec5333f3a5ce04113c38a041100"
 }
