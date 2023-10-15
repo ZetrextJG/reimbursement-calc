@@ -96,16 +96,36 @@ pub struct Item {
     pub reimburstment: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, EnumString)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, EnumString)]
 pub enum ClaimStatus {
     Pending,
     Accepted,
     Rejected,
 }
 
+impl From<String> for ClaimStatus {
+    fn from(value: String) -> Self {
+        // HACK: This might change later
+        ClaimStatus::from_str(value.as_str()).unwrap_or(ClaimStatus::Pending)
+    }
+}
+
+impl ToString for ClaimStatus {
+    fn to_string(&self) -> String {
+        match self {
+            ClaimStatus::Pending => "Pending".to_string(),
+            ClaimStatus::Accepted => "Accepted".to_string(),
+            ClaimStatus::Rejected => "Rejected".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claim {
+    pub id: i32,
     pub user_id: i32,
+    pub total_cost: Option<Decimal>,
+    pub reimburstment: Option<Decimal>,
     pub status: ClaimStatus,
 }
 

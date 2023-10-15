@@ -4,16 +4,16 @@ use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use axum::http::{header, Response, StatusCode};
 use axum::response::IntoResponse;
-use axum::{extract, Extension, Json};
+use axum::{extract, Json};
 use rand::rngs::OsRng;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use validator::Validate;
 
-use crate::forms::LoginForm;
+use crate::forms::{ItemForm, LoginForm};
 use crate::jwt_auth::{create_cookie_with_token, create_empty_cookie, create_new_auth_token};
-use crate::models::{BasicUserInfo, Category, Role, User};
+use crate::models::{BasicUserInfo, Category, Claim, ClaimStatus, Role, User};
 use crate::{forms, AppState};
 
 type ErrorResponse = (StatusCode, &'static str);
@@ -356,4 +356,164 @@ pub async fn update_category(
     ))?;
 
     Ok(success_response!(category))
+}
+
+pub async fn create_claim(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(user): extract::Extension<User>,
+    extract::Json(body): extract::Json<forms::ClaimForm>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    body.validate()
+        .map_err(|_| bad_request!("Form failed validation"))?;
+
+    let mut transaction = app_state.pool.begin().await.map_err(|_| DATABASE_ERROR)?;
+
+    let claim = sqlx::query_as!(
+        Claim,
+        "INSERT INTO claims ( user_id ) VALUES ($1) RETURNING *",
+        user.id
+    )
+    .fetch_one(&mut *transaction)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+
+    let mut total_cost = Decimal::from(0);
+    let mut reimburstment = Decimal::from(0);
+    for item in body.items {
+        let category = sqlx::query_as!(
+            Category,
+            "SELECT * FROM categories WHERE id = $1",
+            item.category_id
+        )
+        .fetch_optional(&mut *transaction)
+        .await
+        .map_err(|_| DATABASE_ERROR)?
+        .ok_or(error_response!(
+            StatusCode::NOT_FOUND,
+            "Category with this id does not exist"
+        ))?;
+
+        let mut item_reimburstment =
+            category.reimburstment_percentage * item.cost / Decimal::from(100);
+        if item_reimburstment > category.max_reimburstment {
+            item_reimburstment = category.max_reimburstment;
+        }
+
+        sqlx::query!(
+            "INSERT INTO items ( claim_id, category_id, cost, reimburstment ) VALUES ($1, $2, $3, $4)",
+            claim.id,
+            item.category_id,
+            item.cost,
+            item_reimburstment
+        )
+        .execute(&mut *transaction)
+        .await
+        .map_err(|_| DATABASE_ERROR)?;
+
+        total_cost += item.cost;
+        reimburstment += item_reimburstment
+    }
+
+    sqlx::query!(
+        "UPDATE claims SET total_cost = $1, reimburstment = $2 WHERE id = $3",
+        total_cost,
+        reimburstment,
+        claim.id
+    )
+    .execute(&mut *transaction)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+
+    transaction.commit().await.map_err(|_| DATABASE_ERROR)?;
+
+    Ok(success_response!(claim))
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ToEstimate {
+    pub items: Vec<ItemForm>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EstimateResult {
+    pub reimburstment: Decimal,
+}
+
+pub async fn estimate_item(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Json(body): extract::Json<ItemForm>,
+) -> Result<Json<EstimateResult>, ErrorResponse> {
+    body.validate()
+        .map_err(|_| bad_request!("Form failed validation"))?;
+
+    let category = sqlx::query_as!(
+        Category,
+        "SELECT * FROM categories WHERE id = $1",
+        body.category_id
+    )
+    .fetch_optional(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?
+    .ok_or(error_response!(
+        StatusCode::NOT_FOUND,
+        "Invalid category for an item"
+    ))?;
+
+    let mut reimburstment = category.reimburstment_percentage * body.cost / Decimal::from(100);
+    if reimburstment > category.max_reimburstment {
+        reimburstment = category.max_reimburstment;
+    }
+
+    Ok(Json(EstimateResult { reimburstment }))
+}
+
+pub async fn approve_claim(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(manager): extract::Extension<User>,
+    extract::Path(claim_id): extract::Path<i32>,
+    extract::Query(accept): extract::Query<bool>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    if manager.role < Role::Manager {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "You must be a manager to perform this action"
+        ));
+    }
+
+    let mut transaction = app_state.pool.begin().await.map_err(|_| DATABASE_ERROR)?;
+
+    let claim = sqlx::query_as!(Claim, "SELECT * FROM claims WHERE id = $1", claim_id)
+        .fetch_optional(&mut *transaction)
+        .await
+        .map_err(|_| DATABASE_ERROR)?
+        .ok_or(error_response!(
+            StatusCode::NOT_FOUND,
+            "Claim with this id does not exist"
+        ))?;
+
+    if claim.status != ClaimStatus::Pending {
+        return Err(error_response!(
+            StatusCode::CONFLICT,
+            "Claim is already processed"
+        ));
+    }
+
+    let status = if accept {
+        ClaimStatus::Accepted
+    } else {
+        ClaimStatus::Rejected
+    };
+
+    sqlx::query!(
+        "UPDATE claims SET status = $1 WHERE id = $2",
+        status.to_string(),
+        claim_id
+    )
+    .execute(&mut *transaction)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+
+    transaction.commit().await.map_err(|_| DATABASE_ERROR)?;
+
+    Ok(success_response!())
 }

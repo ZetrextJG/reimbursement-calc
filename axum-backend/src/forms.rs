@@ -41,7 +41,7 @@ fn validate_password_strength(password: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 pub struct SignupForm {
     #[validate(email)]
     pub mail: String,
@@ -54,7 +54,7 @@ pub struct SignupForm {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct LoginForm {
     pub username: String,
     pub password: String,
@@ -75,7 +75,7 @@ fn validate_cost(cost: &Decimal) -> Result<(), ValidationError> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ItemForm {
     pub category_id: i32,
     #[validate(custom = "validate_cost")]
@@ -89,7 +89,7 @@ fn validate_items(items: &[ItemForm]) -> Result<(), ValidationError> {
     })
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 pub struct ClaimForm {
     pub user_id: i32,
     pub auth_token: String,
@@ -115,7 +115,7 @@ fn validate_max_reimburstment(value: &Decimal) -> Result<(), ValidationError> {
     }
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Clone, Deserialize, Validate)]
 pub struct CategoryForm {
     #[validate(length(min = 1, message = "Can not be empty"))]
     pub name: String,

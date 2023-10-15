@@ -45,5 +45,11 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
             "/categories/update/:category_id",
             patch(handlers::update_category),
         )
+        .route("/claims/create", authorized!(post(handlers::create_claim)))
+        .route(
+            "/claims/approve/:claim_id",
+            authorized!(get(handlers::approve_claim)),
+        )
+        .route("/claims/estimate_item", post(handlers::estimate_item))
         .with_state(app_state)
 }

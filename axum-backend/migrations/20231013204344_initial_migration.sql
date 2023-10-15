@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS claims (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  user_id INTEGER REFERENCES users (id),
+  user_id INTEGER NOT NULL REFERENCES users (id),
+  total_cost NUMERIC,
+  reimburstment NUMERIC,
   status VARCHAR(30) NOT NULL DEFAULT 'Pending'
 );
 
@@ -28,8 +30,8 @@ CREATE INDEX IF NOT EXISTS claims_user_id_idx ON claims (user_id);
 
 CREATE TABLE IF NOT EXISTS items (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  claim_id INTEGER REFERENCES claims (id),
-  category_id INTEGER REFERENCES categories (id),
+  claim_id INTEGER NOT NULL REFERENCES claims (id),
+  category_id INTEGER NOT NULL REFERENCES categories (id),
   cost NUMERIC NOT NULL CHECK (cost > 0),
   reimburstment NUMERIC NOT NULL CHECK (reimburstment > 0)
 );
