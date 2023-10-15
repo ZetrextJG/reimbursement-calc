@@ -7,7 +7,6 @@ pub struct Config {
     pub jwt_secret: String,
     pub jwt_expires_in: String,
     pub jwt_maxage: i32,
-    pub smpt_from: String,
     pub smtp_username: String,
     pub smtp_password: String,
     pub smtp_host: String,
@@ -19,7 +18,6 @@ pub struct Config {
 const PORT: &str = dotenv!("PORT");
 const JWT_EXPIRES_IN: &str = dotenv!("JWT_EXPIRES_IN");
 const JWT_MAXAGE: &str = dotenv!("JWT_MAXAGE");
-const SMTP_FROM: &str = dotenv!("SMTP_FROM");
 const SMTP_HOST: &str = dotenv!("SMTP_HOST");
 const SMTP_PORT: &str = dotenv!("SMTP_PORT");
 const FRONTEND_ORIGIN: &str = dotenv!("FRONTEND_ORIGIN");
@@ -38,7 +36,6 @@ impl Config {
             jwt_secret,
             jwt_expires_in: JWT_EXPIRES_IN.to_owned(),
             jwt_maxage: JWT_MAXAGE.parse::<i32>().expect("Invalid JWT_MAXAGE"),
-            smpt_from: SMTP_FROM.to_owned(),
             smtp_username,
             smtp_password,
             smtp_host: SMTP_HOST.to_owned(),

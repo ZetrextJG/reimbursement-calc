@@ -17,12 +17,20 @@ dotenv_codegen = "0.15.0"
 env_logger = "0.10.0"
 jsonwebtoken = "8.3.0"
 lazy_static = "1.4.0"
+lettre = { version = "0.11.0", features = ["tokio1", "tokio1-native-tls"] }
 rand = "0.8.5"
 regex = "1.10.0"
 rust_decimal = { version = "1.32.0", features = ["db-postgres"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
-sqlx = { version = "0.7.2", features = ["uuid", "chrono", "runtime-tokio", "postgres", "tls-rustls", "rust_decimal"] }
+sqlx = { version = "0.7.2", features = [
+  "uuid",
+  "chrono",
+  "runtime-tokio",
+  "postgres",
+  "tls-rustls",
+  "rust_decimal",
+] }
 strum = { version = "0.25.0", features = ["derive"] }
 time = "0.3.30"
 tokio = { version = "1.33.0", features = ["full"] }
