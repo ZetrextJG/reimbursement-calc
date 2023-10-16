@@ -15,6 +15,7 @@ chrono = { version = "0.4.31", features = ["serde"] }
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
 env_logger = "0.10.0"
+handlebars = "4.4.0"
 jsonwebtoken = "8.3.0"
 lazy_static = "1.4.0"
 lettre = { version = "0.11.0", features = ["tokio1", "tokio1-native-tls"] }
