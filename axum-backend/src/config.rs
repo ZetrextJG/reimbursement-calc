@@ -10,7 +10,7 @@ pub struct Config {
     pub smtp_username: String,
     pub smtp_password: String,
     pub smtp_host: String,
-    pub smtp_port: i32,
+    pub smtp_port: u16,
     pub frontend_origin: String,
 }
 
@@ -39,7 +39,7 @@ impl Config {
             smtp_username,
             smtp_password,
             smtp_host: SMTP_HOST.to_owned(),
-            smtp_port: SMTP_PORT.parse::<i32>().expect("Invalid SMTP_PORT"),
+            smtp_port: SMTP_PORT.parse::<u16>().expect("Invalid SMTP_PORT"),
             frontend_origin: FRONTEND_ORIGIN.to_owned(),
         }
     }

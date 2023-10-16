@@ -19,6 +19,10 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
     Router::new()
         .route("/ping", get(handlers::health))
         .route("/auth/register", post(handlers::register_user))
+        .route(
+            "/auth/verifyemail/:verification_code",
+            get(handlers::verify_email),
+        )
         .route("/auth/login", post(handlers::login_user))
         .route("/auth/logout", authorized!(get(handlers::logout_user)))
         .route("/users/count", get(handlers::users_count))

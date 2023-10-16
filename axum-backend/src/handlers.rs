@@ -14,7 +14,8 @@ use validator::Validate;
 use crate::forms::{ItemForm, LoginForm};
 use crate::jwt_auth::{create_cookie_with_token, create_empty_cookie, create_new_auth_token};
 use crate::models::{BasicUserInfo, Category, Claim, ClaimStatus, Role, User};
-use crate::{forms, AppState};
+use crate::utils::generate_random_string;
+use crate::{email, forms, AppState};
 
 type ErrorResponse = (StatusCode, &'static str);
 
@@ -107,16 +108,10 @@ pub async fn users_list(
     Ok(Json(users))
 }
 
-#[derive(Debug, Serialize)]
-pub struct BasicResponse {
-    status: &'static str,
-    message: String,
-}
-
 pub async fn register_user(
     extract::State(app_state): extract::State<Arc<AppState>>,
     extract::Json(body): extract::Json<forms::SignupForm>,
-) -> Result<Json<BasicResponse>, ErrorResponse> {
+) -> Result<impl IntoResponse, ErrorResponse> {
     body.validate()
         .map_err(|_| bad_request!("Form failed validation"))?;
 
@@ -136,31 +131,49 @@ pub async fn register_user(
         .map_err(|_| error_response!(StatusCode::INTERNAL_SERVER_ERROR, "Hash method failed"))
         .map(|hash| hash.to_string())?;
 
-    // TODO: Implement verification email
-    // let verification_code = generate_random_string(10);
     let user = sqlx::query_as!(
         User,
         "INSERT INTO users ( mail, username, password_hash ) VALUES ($1, $2, $3) RETURNING *",
         body.mail.to_owned().to_ascii_lowercase(),
         body.username,
-        hashed_password
+        hashed_password,
     )
     .fetch_one(&app_state.pool)
     .await
     .map_err(|_| DATABASE_ERROR)?;
 
-    let response = BasicResponse {
-        status: "success",
-        // TODO: Change that to add info about email verification code
-        message: format!("User {} successfully registered", user.username),
-    };
+    // Store user credentials in the database
+    let verification_code = generate_random_string(10);
+    let verification_url = format!(
+        "{}/verifyemail/{}",
+        app_state.config.frontend_origin.to_owned(),
+        verification_code
+    );
+    // Send email verification token to the user's email address
+    let email_instance =
+        email::Email::new(user.clone(), verification_url, app_state.config.clone());
+    email_instance
+        .send_verification_code()
+        .await
+        .map_err(|_| error_response!(StatusCode::INTERNAL_SERVER_ERROR, "Could not send email"))?;
 
-    Ok(Json(response))
+    sqlx::query!(
+        "UPDATE users SET verification_code = $1 WHERE id = $2",
+        verification_code,
+        user.id
+    )
+    .execute(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+
+    Ok(success_response!(json!({
+        "message": "User created successfully. Please verify your email address"
+    })))
 }
 
 pub async fn login_user(
     extract::State(app_state): extract::State<Arc<AppState>>,
-    Json(body): Json<LoginForm>,
+    extract::Json(body): extract::Json<LoginForm>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
     let user: User = sqlx::query_as!(
         User,
@@ -172,7 +185,13 @@ pub async fn login_user(
     .map_err(|_| DATABASE_ERROR)?
     .ok_or(bad_request!("Username or password dont match"))?;
 
-    // TODO; Check if user is verified
+    if !user.verified {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "Please verify your email address"
+        ));
+    }
+
     let is_password_correct = match PasswordHash::new(&user.password_hash) {
         Ok(parsed_hash) => Argon2::default()
             .verify_password(body.password.as_bytes(), &parsed_hash)
@@ -194,6 +213,33 @@ pub async fn login_user(
         .headers_mut()
         .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
     Ok(response)
+}
+
+pub async fn verify_email(
+    extract::State(data): extract::State<Arc<AppState>>,
+    extract::Path(verification_code): extract::Path<String>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    let user = sqlx::query_as!(
+        User,
+        "SELECT * FROM users WHERE verification_code = $1",
+        verification_code
+    )
+    .fetch_optional(&data.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?
+    .ok_or(error_response!(
+        StatusCode::NOT_FOUND,
+        "Verification code is invalid"
+    ))?;
+
+    sqlx::query!("UPDATE users SET verified = true WHERE id = $1", user.id)
+        .execute(&data.pool)
+        .await
+        .map_err(|_| DATABASE_ERROR)?;
+
+    Ok(success_response!(json!({
+        "message": "Email verified successfully"
+    })))
 }
 
 pub async fn logout_user() -> Result<impl IntoResponse, ErrorResponse> {

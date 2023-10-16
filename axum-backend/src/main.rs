@@ -1,4 +1,5 @@
 pub mod config;
+pub mod email;
 pub mod forms;
 mod handlers;
 mod jwt_auth;
