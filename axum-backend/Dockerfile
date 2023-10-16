@@ -29,6 +29,8 @@ CMD ["cargo", "test"]
 
 FROM debian:bookworm-slim AS integration
 
+RUN apt update && apt install libssl3 libssl-dev
+
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 ARG JWT_SECRET
@@ -43,5 +45,8 @@ ENTRYPOINT ["/usr/local/bin/axum-backend"]
 
 FROM debian:bookworm-slim AS deployment
 WORKDIR /app
+
+RUN apt update && apt install libssl3 libssl-dev
+
 COPY --from=builder /app/target/release/axum-backend /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/axum-backend"]
