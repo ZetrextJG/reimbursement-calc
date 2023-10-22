@@ -43,8 +43,8 @@ impl Email {
 
     fn render_template(
         &self,
-        subject: &str,
         template_name: &str,
+        subject: &str,
     ) -> Result<String, handlebars::RenderError> {
         let mut handlebars = Handlebars::new();
         handlebars.register_template_file(

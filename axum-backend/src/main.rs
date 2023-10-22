@@ -33,9 +33,13 @@ async fn main() -> Result<(), anyhow::Error> {
 
     sqlx::migrate!("./migrations").run(&pool).await?;
 
+    let origins = vec![
+        config.frontend_origin.parse::<HeaderValue>().unwrap(),
+        "http://127.0.0.1".parse::<HeaderValue>().unwrap(),
+    ];
+
     let cors = CorsLayer::new()
-        .allow_origin("http://localhost:80".parse::<HeaderValue>().unwrap())
-        .allow_origin(config.frontend_origin.parse::<HeaderValue>().unwrap())
+        .allow_origin(origins)
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
         .allow_credentials(true)
         .allow_headers([header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE]);
@@ -44,7 +48,7 @@ async fn main() -> Result<(), anyhow::Error> {
         pool,
         config: config.clone(),
     });
-    let app = create_router(app_state).layer(cors);
+    let app = create_router(app_state).layer(CorsLayer::very_permissive());
 
     let addr = format!("0.0.0.0:{}", config.port);
     println!("Listening at {}", &addr);

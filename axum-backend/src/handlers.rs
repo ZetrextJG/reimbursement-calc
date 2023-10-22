@@ -115,7 +115,7 @@ pub async fn register_user(
     body.validate()
         .map_err(|_| bad_request!("Form failed validation"))?;
 
-    sqlx::query_scalar!(
+    let user_exists = sqlx::query_scalar!(
         "SELECT EXISTS(SELECT 1 FROM users WHERE mail = $1 OR username = $2)",
         body.mail.to_owned().to_ascii_lowercase(),
         body.username.to_owned().to_ascii_lowercase()
@@ -123,7 +123,13 @@ pub async fn register_user(
     .fetch_one(&app_state.pool)
     .await
     .map_err(|_| DATABASE_ERROR)?
-    .ok_or(error_response!(StatusCode::CONFLICT, "User already exists"))?;
+    .unwrap_or(false);
+
+    if user_exists {
+        return Err(error_response!(StatusCode::CONFLICT, "User already exists"));
+    }
+
+    let mut transation = app_state.pool.begin().await.map_err(|_| DATABASE_ERROR)?;
 
     let salt = SaltString::generate(&mut OsRng);
     let hashed_password = Argon2::default()
@@ -138,7 +144,7 @@ pub async fn register_user(
         body.username,
         hashed_password,
     )
-    .fetch_one(&app_state.pool)
+    .fetch_one(&mut *transation)
     .await
     .map_err(|_| DATABASE_ERROR)?;
 
@@ -152,20 +158,21 @@ pub async fn register_user(
     // Send email verification token to the user's email address
     let email_instance =
         email::Email::new(user.clone(), verification_url, app_state.config.clone());
-    email_instance
-        .send_verification_code()
-        .await
-        .map_err(|_| error_response!(StatusCode::INTERNAL_SERVER_ERROR, "Could not send email"))?;
+    email_instance.send_verification_code().await.map_err(|e| {
+        println!("{:?}", e);
+        error_response!(StatusCode::INTERNAL_SERVER_ERROR, "Could not send email")
+    })?;
 
     sqlx::query!(
         "UPDATE users SET verification_code = $1 WHERE id = $2",
         verification_code,
         user.id
     )
-    .execute(&app_state.pool)
+    .execute(&mut *transation)
     .await
     .map_err(|_| DATABASE_ERROR)?;
 
+    transation.commit().await.map_err(|_| DATABASE_ERROR)?;
     Ok(success_response!(json!({
         "message": "User created successfully. Please verify your email address"
     })))
