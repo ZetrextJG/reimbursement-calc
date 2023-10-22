@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getUsers } from '$lib/api';
+	import { getUsers, makeUserManager } from '$lib/api';
 	import type { User } from '$lib/models';
 	import { currentUser } from '$lib/stores';
 	import { Avatar } from '@skeletonlabs/skeleton';
@@ -63,16 +63,11 @@
 								user.role == 'Manager' ||
 								user.role == 'Admin' ||
 								user.username == $currentUser?.username}
+							on:click={() => {
+								makeUserManager(user.id);
+							}}
 							type="button"
 							class="btn bg-secondary-800">Make manager</button
-						>
-						<div class="w-5 h-5" />
-						<button
-							disabled={!isViewerAdmin ||
-								user.role == 'Admin' ||
-								user.username == $currentUser?.username}
-							type="button"
-							class="btn bg-tertiary-800">Make admin</button
 						>
 					</div>
 				</div>

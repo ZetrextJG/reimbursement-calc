@@ -1,2 +1,2 @@
-// Change this to flase to enable SPA
+// Change this to false to enable SPA
 export const ssr = true;

@@ -19,5 +19,6 @@ FROM build AS integration
 CMD ["npm", "run", "test", "--" ,"--run"]
 
 FROM nginx:1.19-alpine AS deployment
+ENV NODE_ENV production
 COPY --from=build /app/build /usr/share/nginx/html
 

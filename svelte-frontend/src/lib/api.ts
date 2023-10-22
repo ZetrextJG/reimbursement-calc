@@ -84,7 +84,7 @@ export async function getUsers(startswith: string): Promise<User[]> {
 }
 
 export async function makeUserManager(userId: number): Promise<boolean> {
-  const res = await fetch(`${API_URL}/users/${userId}/make_manager?user_id=${userId}`, {
+  const res = await fetch(`${API_URL}/users/make_manager/${userId}`, {
     method: "GET",
     credentials: "include",
   });
