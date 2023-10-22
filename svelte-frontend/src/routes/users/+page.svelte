@@ -43,7 +43,7 @@
 					class="flex flex-col md:flex-row items-center md:justify-between w-full border rounded-2xl border-surface-500 p-5"
 				>
 					<div class="flex flex-row items-center space-x-2 p-2">
-						<Avatar initials={user.username.slice(0, 2)} class="w-10 h-10" alt={user.username} />
+						<Avatar initials={user.username.slice(0, 2)} class="w-11 h-11" alt={user.username} />
 						{#if user.role === 'admin'}
 							<p class="md:text-xl text-red-700">{user.role}</p>
 						{:else if user.role == 'manager'}

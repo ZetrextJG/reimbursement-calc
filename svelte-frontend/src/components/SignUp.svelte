@@ -93,11 +93,12 @@
 />
 <div class="absolute top-20 w-full justify-center items-center">
 	<div class="flex w-full h-full py-3 px-3 flex-col justify-center items-center align-middle">
-		<div
+		<form
+			on:submit|preventDefault={signupUser}
 			class="flex flex-col items-center space-y-10 bg-surface-800 bg-opacity-90 rounded-xl p-10 z-20"
 		>
 			<h1 class="text-4xl">Sign Up</h1>
-			<form on:submit|preventDefault={signupUser} class="grid grid-cols-1 md:grid-cols-2">
+			<div class="grid grid-cols-1 md:grid-cols-2">
 				<label for="username" class="label flex flex-col space-y-3 items-start p-3">
 					<span class="text-l pl-3">Username</span>
 					<input
@@ -148,7 +149,7 @@
 						placeholder="***"
 					/>
 				</label>
-			</form>
+			</div>
 			<div class="flex flex-row items-center justify-around w-full">
 				<div class="flex flex-row justify-center items-center">
 					<button
@@ -161,7 +162,7 @@
 					<button
 						class:validSignup
 						disabled={!validSignup}
-						type="button"
+						type="submit"
 						class="btn md:px-12 md:py-3 px-8 py-4 bg-secondary-600">Sign Up</button
 					>
 				</div>
@@ -172,7 +173,7 @@
 					>Login</button
 				>
 			</div>
-		</div>
+		</form>
 	</div>
 </div>
 

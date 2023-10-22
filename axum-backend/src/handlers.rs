@@ -245,12 +245,12 @@ pub async fn login_user(
 
 pub async fn verify_email(
     extract::State(data): extract::State<Arc<AppState>>,
-    extract::Path(verification_code): extract::Path<String>,
+    extract::Path(code): extract::Path<String>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
     let user = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE verification_code = $1",
-        verification_code
+        code
     )
     .fetch_optional(&data.pool)
     .await

@@ -26,7 +26,8 @@ export async function login(username: string, password: string): Promise<boolean
 }
 
 export async function signup(username: string, mail: string, password: string): Promise<boolean> {
-  const res = await fetch(`${API_URL}/auth/signup`, {
+  console.log("Hello");
+  const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -104,4 +105,16 @@ export async function getCategories(): Promise<Category[]> {
     return data as Category[];
   }
   return [];
+}
+
+export async function verifyEmail(code: string): Promise<boolean> {
+  const res = await fetch(`${API_URL}/auth/verifyemail/${code}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data.status == "success";
+  }
+  return false;
 }
