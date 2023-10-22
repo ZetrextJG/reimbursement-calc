@@ -172,7 +172,7 @@ pub async fn register_user(
     // Store user credentials in the database
     let verification_code = generate_random_string(10);
     let verification_url = format!(
-        "{}/verifyemail/{}",
+        "{}/verifyemail?code={}",
         app_state.config.frontend_origin.to_owned(),
         verification_code
     );
