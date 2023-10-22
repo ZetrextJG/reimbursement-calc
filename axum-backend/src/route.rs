@@ -27,6 +27,7 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
         .route("/auth/logout", authorized!(get(handlers::logout_user)))
         .route("/users/count", get(handlers::users_count))
         .route("/users/list", get(handlers::users_list))
+        .route("/users/startswith", get(handlers::users_startswith))
         .route("/users/me", authorized!(get(handlers::users_me)))
         .route(
             "/users/delete_account",

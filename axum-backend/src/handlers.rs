@@ -79,14 +79,35 @@ pub async fn users_count(
 }
 
 #[derive(Debug, Deserialize)]
-pub struct FetchUsers {
+pub struct StartswithPayload {
+    start: Option<String>,
+}
+
+pub async fn users_startswith(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Query(query): extract::Query<StartswithPayload>,
+) -> Result<Json<Vec<BasicUserInfo>>, ErrorResponse> {
+    let start = query.start.unwrap_or("".to_string());
+    let users = sqlx::query_as!(
+        BasicUserInfo,
+        "SELECT id, username, role, verified, created_at FROM users WHERE username LIKE $1 LIMIT 10",
+        format!("{}%", start)
+    )
+    .fetch_all(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+    Ok(Json(users))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FetchUsersPayload {
     limit: Option<i64>,
     offset: Option<i64>,
 }
 
 pub async fn users_list(
     extract::State(app_state): extract::State<Arc<AppState>>,
-    extract::Query(query): extract::Query<FetchUsers>,
+    extract::Query(query): extract::Query<FetchUsersPayload>,
 ) -> Result<Json<Vec<BasicUserInfo>>, ErrorResponse> {
     let limit = query.limit.unwrap_or(10);
     if !(0..=100).contains(&limit) {
