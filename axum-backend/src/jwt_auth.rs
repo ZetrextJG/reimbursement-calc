@@ -86,7 +86,8 @@ pub fn create_cookie_with_token<'a>(token: String) -> Cookie<'a> {
     Cookie::build(TOKEN_NAME, token)
         .path("/")
         .max_age(time::Duration::hours(1))
-        .same_site(SameSite::Lax)
+        .same_site(SameSite::None)
+        .secure(true)
         .http_only(true)
         .finish()
 }
@@ -94,7 +95,8 @@ pub fn create_empty_cookie<'a>() -> Cookie<'a> {
     Cookie::build(TOKEN_NAME, "")
         .path("/")
         .max_age(time::Duration::hours(-1))
-        .same_site(SameSite::Lax)
+        .same_site(SameSite::None)
+        .secure(true)
         .http_only(true)
         .finish()
 }
