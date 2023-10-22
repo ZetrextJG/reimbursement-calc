@@ -9,8 +9,8 @@ edition = "2021"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 argon2 = "0.5.2"
 async-trait = "0.1.73"
-axum = "0.6.20"
-axum-extra = { version = "0.8.0", features = ["cookie"] }
+axum = { version = "0.6.20", features = ["headers"] }
+axum-extra = { version = "0.8.0", features = ["cookie", "cookie-signed"] }
 chrono = { version = "0.4.31", features = ["serde"] }
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"

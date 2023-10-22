@@ -28,8 +28,9 @@ FROM builder AS test
 CMD ["cargo", "test"]
 
 FROM debian:bookworm-slim AS integration
+WORKDIR /app
 
-RUN apt update && apt install libssl3 libssl-dev
+RUN apt update && apt install -y libssl3 libssl-dev ca-certificates
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
@@ -40,13 +41,15 @@ ENV SMTP_USERNAME=$SMTP_USERNAME
 ARG SMTP_PASSWORD
 ENV SMTP_PASSWORD=$SMTP_USERNAME
 
-COPY --from=builder /app/target/release/axum-backend /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/axum-backend"]
+COPY --from=builder /app/target/release/axum-backend /app
+COPY ./templates/ /app/templates
+
+ENTRYPOINT ["/app/axum-backend"]
 
 FROM debian:bookworm-slim AS deployment
 WORKDIR /app
 
-RUN apt update && apt install libssl3 libssl-dev
+RUN apt update && apt install -y libssl3 libssl-dev ca-certificates
 
 COPY --from=builder /app/target/release/axum-backend /app
 COPY ./templates/ /app/templates

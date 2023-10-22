@@ -35,7 +35,6 @@ const JWT_EXPIRES_IN: &str = dotenv!("JWT_EXPIRES_IN");
 const JWT_MAXAGE: &str = dotenv!("JWT_MAXAGE");
 const SMTP_HOST: &str = dotenv!("SMTP_HOST");
 const SMTP_PORT: &str = dotenv!("SMTP_PORT");
-const FRONTEND_ORIGIN: &str = dotenv!("FRONTEND_ORIGIN");
 
 impl Config {
     pub fn init() -> Result<Config, validator::ValidationErrors> {
@@ -44,6 +43,8 @@ impl Config {
         let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
         let smtp_username = std::env::var("SMTP_USERNAME").expect("SMTP_USERNAME must be set");
         let smtp_password = std::env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD must be set");
+        let frontend_origin =
+            std::env::var("FRONTEND_ORIGIN").expect("FRONTEND_ORIGIN must be set");
 
         let config = Config {
             port: PORT.parse::<i32>().expect("Invalid PORT"),
@@ -55,7 +56,7 @@ impl Config {
             smtp_password,
             smtp_host: SMTP_HOST.to_owned(),
             smtp_port: SMTP_PORT.parse::<u16>().expect("Invalid SMTP_PORT"),
-            frontend_origin: FRONTEND_ORIGIN.to_owned(),
+            frontend_origin,
         };
         config.validate()?;
         return Ok(config);
