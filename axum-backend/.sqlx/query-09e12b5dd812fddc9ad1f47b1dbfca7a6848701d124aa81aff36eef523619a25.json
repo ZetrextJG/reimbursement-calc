@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE claims SET total_cost = $1, reimburstment = $2 WHERE id = $3",
+  "query": "UPDATE claims SET total_cost = $1, reimbursement = $2 WHERE id = $3",
   "describe": {
     "columns": [],
     "parameters": {
@@ -12,5 +12,5 @@
     },
     "nullable": []
   },
-  "hash": "77e36b5cf718724fc9931c71ec230f641de74b9c17d520229895b659cbd06e13"
+  "hash": "09e12b5dd812fddc9ad1f47b1dbfca7a6848701d124aa81aff36eef523619a25"
 }

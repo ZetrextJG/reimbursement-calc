@@ -105,10 +105,10 @@ fn validate_percentage(value: &Decimal) -> Result<(), ValidationError> {
     }
 }
 
-fn validate_max_reimburstment(value: &Decimal) -> Result<(), ValidationError> {
+fn validate_max_reimbursement(value: &Decimal) -> Result<(), ValidationError> {
     if *value < Decimal::from(0) {
         Err(ValidationError::new(
-            "Max reimburstment cannot be negative nor zero",
+            "Max reimbursement cannot be negative nor zero",
         ))
     } else {
         Ok(())
@@ -120,11 +120,11 @@ pub struct CategoryForm {
     #[validate(length(min = 1, message = "Can not be empty"))]
     pub name: String,
     #[validate(custom = "validate_percentage")]
-    #[serde(rename = "reimburstmentPercentage")]
-    pub reimburstment_percentage: Decimal,
-    #[validate(custom = "validate_max_reimburstment")]
+    #[serde(rename = "reimbursementPercentage")]
+    pub reimbursement_percentage: Decimal,
+    #[validate(custom = "validate_max_reimbursement")]
     #[serde(rename = "maxReimburstment")]
-    pub max_reimburstment: Decimal,
+    pub max_reimbursement: Decimal,
 }
 
 #[cfg(test)]

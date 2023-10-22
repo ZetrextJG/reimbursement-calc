@@ -10,26 +10,28 @@
 	});
 
 	let nameStart = '';
-  let reimburstmentPercentage = 0;
-  let maxReimburstment = 0;
+	let reimbursementPercentage = 0;
+	let maxReimburstment = 0;
 
-  $: isViewerAdmin = $currentUser?.role === 'Admin';
+	$: isViewerAdmin = $currentUser?.role === 'Admin';
 	$: visibleCategories = categories.filter((cat) =>
 		cat.name.toLowerCase().includes(nameStart.toLowerCase())
 	);
 
-  function createNewCategory() {
-    visibleCategories = categories.filter((cat) =>
-      cat.name.toLowerCase().includes(nameStart.toLowerCase())
-    );
-  }
-
+	function createNewCategory() {
+		visibleCategories = categories.filter((cat) =>
+			cat.name.toLowerCase().includes(nameStart.toLowerCase())
+		);
+	}
 </script>
 
 <div class="container h-full mx-auto flex justify-center items-center w-3/5">
 	<!-- search the user here -->
 	<div class="flex flex-col bg-surface-800 p-5 w-full">
-		<form on:submit|preventDefault={} class="flex flex-col md:flex-row justify-start items-center w-full">
+		<form
+			on:submit|preventDefault={createNewCategory}
+			class="flex flex-col md:flex-row justify-start items-center w-full"
+		>
 			<label for="username" class="label flex flex-col space-y-3 items-start p-3">
 				<span class="text-l pl-3">Category name</span>
 				<input id="name" bind:value={nameStart} class="input" type="text" placeholder="taxi" />
@@ -73,7 +75,7 @@
 						<tr>
 							<td>{cat.id}</td>
 							<td>{cat.name}</td>
-							<td>{cat.reimburstmentPercentage}%</td>
+							<td>{cat.reimbursementPercentage}%</td>
 							<td>${cat.maxReimburstment}</td>
 							{#if isViewerAdmin}
 								<td><a href="/" on:click={() => {}} class="text-error-600">Remove</a></td>

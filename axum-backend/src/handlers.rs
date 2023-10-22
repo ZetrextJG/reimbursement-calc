@@ -348,10 +348,10 @@ pub async fn create_category(
 
     let category = sqlx::query_as!(
         Category,
-        "INSERT INTO categories ( name, reimburstment_percentage, max_reimburstment ) VALUES ($1, $2, $3) RETURNING *",
+        "INSERT INTO categories ( name, reimbursement_percentage, max_reimbursement ) VALUES ($1, $2, $3) RETURNING *",
         body.name,
-        body.reimburstment_percentage,
-        body.max_reimburstment
+        body.reimbursement_percentage,
+        body.max_reimbursement
     )
         .fetch_optional(&app_state.pool)
         .await
@@ -394,8 +394,8 @@ pub async fn delete_category(
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateCategory {
-    reimburstment_percentage: Option<Decimal>,
-    max_reimburstment: Option<Decimal>,
+    reimbursement_percentage: Option<Decimal>,
+    max_reimbursement: Option<Decimal>,
 }
 
 pub async fn update_category(
@@ -414,11 +414,11 @@ pub async fn update_category(
     let category = sqlx::query_as!(
         Category,
         "UPDATE categories 
-        SET reimburstment_percentage = COALESCE($1, reimburstment_percentage), max_reimburstment = COALESCE($2, max_reimburstment) 
+        SET reimbursement_percentage = COALESCE($1, reimbursement_percentage), max_reimbursement = COALESCE($2, max_reimbursement) 
         WHERE id = $3
         RETURNING *",
-        updates.reimburstment_percentage,
-        updates.max_reimburstment,
+        updates.reimbursement_percentage,
+        updates.max_reimbursement,
         category_id
     )
     .fetch_optional(&app_state.pool)
@@ -452,7 +452,7 @@ pub async fn create_claim(
     .map_err(|_| DATABASE_ERROR)?;
 
     let mut total_cost = Decimal::from(0);
-    let mut reimburstment = Decimal::from(0);
+    let mut reimbursement = Decimal::from(0);
     for item in body.items {
         let category = sqlx::query_as!(
             Category,
@@ -467,31 +467,31 @@ pub async fn create_claim(
             "Category with this id does not exist"
         ))?;
 
-        let mut item_reimburstment =
-            category.reimburstment_percentage * item.cost / Decimal::from(100);
-        if item_reimburstment > category.max_reimburstment {
-            item_reimburstment = category.max_reimburstment;
+        let mut item_reimbursement =
+            category.reimbursement_percentage * item.cost / Decimal::from(100);
+        if item_reimbursement > category.max_reimbursement {
+            item_reimbursement = category.max_reimbursement;
         }
 
         sqlx::query!(
-            "INSERT INTO items ( claim_id, category_id, cost, reimburstment ) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO items ( claim_id, category_id, cost, reimbursement ) VALUES ($1, $2, $3, $4)",
             claim.id,
             item.category_id,
             item.cost,
-            item_reimburstment
+            item_reimbursement
         )
         .execute(&mut *transaction)
         .await
         .map_err(|_| DATABASE_ERROR)?;
 
         total_cost += item.cost;
-        reimburstment += item_reimburstment
+        reimbursement += item_reimbursement
     }
 
     sqlx::query!(
-        "UPDATE claims SET total_cost = $1, reimburstment = $2 WHERE id = $3",
+        "UPDATE claims SET total_cost = $1, reimbursement = $2 WHERE id = $3",
         total_cost,
-        reimburstment,
+        reimbursement,
         claim.id
     )
     .execute(&mut *transaction)
@@ -510,7 +510,7 @@ pub struct ToEstimate {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct EstimateResult {
-    pub reimburstment: Decimal,
+    pub reimbursement: Decimal,
 }
 
 pub async fn estimate_item(
@@ -533,12 +533,12 @@ pub async fn estimate_item(
         "Invalid category for an item"
     ))?;
 
-    let mut reimburstment = category.reimburstment_percentage * body.cost / Decimal::from(100);
-    if reimburstment > category.max_reimburstment {
-        reimburstment = category.max_reimburstment;
+    let mut reimbursement = category.reimbursement_percentage * body.cost / Decimal::from(100);
+    if reimbursement > category.max_reimbursement {
+        reimbursement = category.max_reimbursement;
     }
 
-    Ok(Json(EstimateResult { reimburstment }))
+    Ok(Json(EstimateResult { reimbursement }))
 }
 
 pub async fn approve_claim(

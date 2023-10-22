@@ -15,12 +15,12 @@
       },
       {
         "ordinal": 2,
-        "name": "reimburstment_percentage",
+        "name": "reimbursement_percentage",
         "type_info": "Numeric"
       },
       {
         "ordinal": 3,
-        "name": "max_reimburstment",
+        "name": "max_reimbursement",
         "type_info": "Numeric"
       }
     ],

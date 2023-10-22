@@ -81,10 +81,10 @@ pub struct JWTokenClaims {
 pub struct Category {
     pub id: i32,
     pub name: String,
-    #[serde(rename = "reimburstmentPercentage")]
-    pub reimburstment_percentage: Decimal,
+    #[serde(rename = "reimbursementPercentage")]
+    pub reimbursement_percentage: Decimal,
     #[serde(rename = "maxReimburstment")]
-    pub max_reimburstment: Decimal,
+    pub max_reimbursement: Decimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -93,7 +93,7 @@ pub struct Item {
     pub claim_id: i32,
     pub category_id: i32,
     pub cost: Decimal,
-    pub reimburstment: Decimal,
+    pub reimbursement: Decimal,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, EnumString)]
@@ -125,7 +125,7 @@ pub struct Claim {
     pub id: i32,
     pub user_id: i32,
     pub total_cost: Option<Decimal>,
-    pub reimburstment: Option<Decimal>,
+    pub reimbursement: Option<Decimal>,
     pub status: ClaimStatus,
 }
 

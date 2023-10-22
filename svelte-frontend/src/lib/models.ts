@@ -10,6 +10,6 @@ export type User = {
 export type Category = {
   id: number,
   name: string;
-  reimburstmentPercentage: number;
+  reimbursementPercentage: number;
   maxReimburstment: number;
 }

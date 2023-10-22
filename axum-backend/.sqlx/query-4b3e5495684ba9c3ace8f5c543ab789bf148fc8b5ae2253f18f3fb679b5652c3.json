@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE categories \n        SET reimburstment_percentage = COALESCE($1, reimburstment_percentage), max_reimburstment = COALESCE($2, max_reimburstment) \n        WHERE id = $3\n        RETURNING *",
+  "query": "UPDATE categories \n        SET reimbursement_percentage = COALESCE($1, reimbursement_percentage), max_reimbursement = COALESCE($2, max_reimbursement) \n        WHERE id = $3\n        RETURNING *",
   "describe": {
     "columns": [
       {
@@ -15,12 +15,12 @@
       },
       {
         "ordinal": 2,
-        "name": "reimburstment_percentage",
+        "name": "reimbursement_percentage",
         "type_info": "Numeric"
       },
       {
         "ordinal": 3,
-        "name": "max_reimburstment",
+        "name": "max_reimbursement",
         "type_info": "Numeric"
       }
     ],
@@ -38,5 +38,5 @@
       false
     ]
   },
-  "hash": "d4f1df1bf060f815c815b09724eed0b9f17d39a735db5e1c9e8f2bdb21f536c6"
+  "hash": "4b3e5495684ba9c3ace8f5c543ab789bf148fc8b5ae2253f18f3fb679b5652c3"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO items ( claim_id, category_id, cost, reimburstment ) VALUES ($1, $2, $3, $4)",
+  "query": "INSERT INTO items ( claim_id, category_id, cost, reimbursement ) VALUES ($1, $2, $3, $4)",
   "describe": {
     "columns": [],
     "parameters": {
@@ -13,5 +13,5 @@
     },
     "nullable": []
   },
-  "hash": "f0228f56e63e85ea85ad53ef6aaf14a74f6f947343d2dc023e4c66780997d53f"
+  "hash": "8d9d2f0eb10f1e8d5c9196c8e025b27bdec5e0d62356b09c5be35e71a0672b1b"
 }

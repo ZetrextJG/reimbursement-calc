@@ -14,15 +14,15 @@ CREATE INDEX IF NOT EXISTS users_verification_code_idx ON users (verification_co
 CREATE TABLE IF NOT EXISTS categories (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name VARCHAR(100) UNIQUE NOT NULL,
-  reimburstment_percentage DECIMAL(5,2) NOT NULL,
-  max_reimburstment NUMERIC NOT NULL
+  reimbursement_percentage DECIMAL(5,2) NOT NULL,
+  max_reimbursement NUMERIC NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS claims (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users (id),
   total_cost NUMERIC,
-  reimburstment NUMERIC,
+  reimbursement NUMERIC,
   status VARCHAR(30) NOT NULL DEFAULT 'Pending'
 );
 
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS items (
   claim_id INTEGER NOT NULL REFERENCES claims (id),
   category_id INTEGER NOT NULL REFERENCES categories (id),
   cost NUMERIC NOT NULL CHECK (cost > 0),
-  reimburstment NUMERIC NOT NULL CHECK (reimburstment > 0)
+  reimbursement NUMERIC NOT NULL CHECK (reimbursement > 0)
 );
 
 CREATE INDEX IF NOT EXISTS items_claim_id_idx ON items (claim_id);
