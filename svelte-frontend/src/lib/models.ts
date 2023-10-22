@@ -6,3 +6,10 @@ export type User = {
   verified: boolean;
   createdAt: string;
 };
+
+export type Category = {
+  id: number,
+  name: string;
+  reimburstmentPercentage: number;
+  maxReimburstment: number;
+}

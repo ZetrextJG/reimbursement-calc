@@ -1,6 +1,9 @@
 <script lang="ts">
 	import '../app.postcss';
 
+	import Login from '../components/Login.svelte';
+	import SignUp from '../components/SignUp.svelte';
+
 	import { AppShell, AppBar, type PopupSettings } from '@skeletonlabs/skeleton';
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { onMount } from 'svelte';
@@ -12,6 +15,7 @@
 	import { page } from '$app/stores';
 
 	onMount(async () => {
+		console.log(currentUser);
 		currentUser.set(await getMe());
 	});
 
@@ -64,18 +68,32 @@
 						<a href="/" class="nav-btn" class:active={$page.url.pathname === '/'}> Home </a>
 					</li>
 					<li>
-						<a href="/history" class="nav-btn" class:active={$page.url.pathname === '/history'}>
+						<a
+							href={$currentUser === null ? '' : '/history'}
+							class="nav-btn"
+							class:disabled={$currentUser === null}
+							class:active={$page.url.pathname === '/history'}
+						>
 							History
 						</a>
 					</li>
 					<li>
-						<a href="/requests" class="nav-btn" class:active={$page.url.pathname === '/requests'}>
+						<a
+							href={$currentUser === null ? '' : '/requests'}
+							class="nav-btn"
+							class:disabled={$currentUser === null}
+							class:active={$page.url.pathname === '/requests'}
+						>
 							Requests
 						</a>
 					</li>
 					<li>
-						<a href="/items" class="nav-btn" class:active={$page.url.pathname === '/items'}>
-							Items
+						<a
+							href="/categories"
+							class="nav-btn"
+							class:active={$page.url.pathname === '/categories'}
+						>
+							Categories
 						</a>
 					</li>
 					<li>
@@ -143,9 +161,20 @@
 	<slot />
 </AppShell>
 
+{#if $siteMode === SiteMode.Login}
+	<Login />
+{:else if $siteMode === SiteMode.SignUp}
+	<SignUp />
+{:else if $siteMode === SiteMode.ResetPassword}
+	<SignUp />
+{/if}
+
 <style lang="postcss">
 	.nav-btn {
 		@apply block py-2 pl-3 pr-4 text-white bg-transparent rounded  border-0 hover:text-blue-700 md:p-0;
+	}
+	.disabled {
+		@apply text-surface-300 opacity-50 cursor-not-allowed;
 	}
 	.active {
 		@apply text-blue-500;

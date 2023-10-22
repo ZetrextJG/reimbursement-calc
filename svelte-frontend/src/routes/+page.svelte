@@ -1,7 +1,4 @@
 <script>
-	import Login from '../components/Login.svelte';
-	import SignUp from '../components/SignUp.svelte';
-	import { SiteMode, siteMode } from '$lib/stores';
 </script>
 
 <!-- YOU CAN DELETE EVERYTHING IN THIS PAGE -->
@@ -36,14 +33,6 @@
 		</div>
 	</div>
 </div>
-
-{#if $siteMode === SiteMode.Login}
-	<Login />
-{:else if $siteMode === SiteMode.SignUp}
-	<SignUp />
-{:else if $siteMode === SiteMode.ResetPassword}
-	<SignUp />
-{/if}
 
 <style lang="postcss">
 	figure {

@@ -8,8 +8,8 @@
 	let password = '';
 	let invalidLogin = false;
 
-	$: username, () => (invalidLogin = false);
-	$: password, () => (invalidLogin = false);
+	$: username, (invalidLogin = false);
+	$: password, (invalidLogin = false);
 
 	function swtichToSignup() {
 		siteMode.set(SiteMode.SignUp);
@@ -25,7 +25,7 @@
 			currentUser.set(await getMe());
 			swtichToDefault();
 		} else {
-			invalidLogin = false;
+			invalidLogin = true;
 		}
 	}
 </script>
