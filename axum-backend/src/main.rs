@@ -24,7 +24,7 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     let _ = dotenv::from_filename(".env.priv");
-    let config = Config::init();
+    let config = Config::init()?;
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -33,13 +33,10 @@ async fn main() -> Result<(), anyhow::Error> {
 
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let origins = vec![
-        config.frontend_origin.parse::<HeaderValue>().unwrap(),
-        "http://127.0.0.1".parse::<HeaderValue>().unwrap(),
-    ];
+    let origin = config.frontend_origin.parse::<HeaderValue>()?;
 
     let cors = CorsLayer::new()
-        .allow_origin(origins)
+        .allow_origin(origin)
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
         .allow_credentials(true)
         .allow_headers([header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE]);
@@ -48,10 +45,11 @@ async fn main() -> Result<(), anyhow::Error> {
         pool,
         config: config.clone(),
     });
-    let app = create_router(app_state).layer(CorsLayer::very_permissive());
+    let app = create_router(app_state).layer(cors);
 
     let addr = format!("0.0.0.0:{}", config.port);
     println!("Listening at {}", &addr);
+    println!("Frontend origin: {}", &config.frontend_origin);
     axum::Server::bind(&addr.parse()?)
         .serve(app.into_make_service())
         .await?;
