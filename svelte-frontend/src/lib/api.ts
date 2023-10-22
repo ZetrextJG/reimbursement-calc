@@ -1,6 +1,7 @@
 import type { Category, User } from "./models";
 
-const API_URL = "http://localhost:8080"
+// const API_URL = "http://localhost:8080"
+const API_URL = "https://re-calc-backend.fly.dev"
 
 export async function fetchUsersCount() {
   const res = await fetch(`${API_URL}/users/count`);

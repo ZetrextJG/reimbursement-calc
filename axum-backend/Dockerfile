@@ -48,5 +48,7 @@ WORKDIR /app
 
 RUN apt update && apt install libssl3 libssl-dev
 
-COPY --from=builder /app/target/release/axum-backend /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/axum-backend"]
+COPY --from=builder /app/target/release/axum-backend /app
+COPY ./templates/ /app/templates
+
+ENTRYPOINT ["/app/axum-backend"]
