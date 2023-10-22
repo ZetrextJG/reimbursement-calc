@@ -25,6 +25,7 @@ pub struct AppState {
 async fn main() -> Result<(), anyhow::Error> {
     let _ = dotenv::from_filename(".env.priv");
     let config = Config::init()?;
+    println!("Config {:?}", &config);
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -49,7 +50,6 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let addr = format!("0.0.0.0:{}", config.port);
     println!("Listening at {}", &addr);
-    println!("Frontend origin: {}", &config.frontend_origin);
     axum::Server::bind(&addr.parse()?)
         .serve(app.into_make_service())
         .await?;
