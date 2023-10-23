@@ -36,7 +36,6 @@ export async function login(username: string, password: string): Promise<boolean
 }
 
 export async function signup(username: string, mail: string, password: string): Promise<boolean> {
-  console.log("Hello");
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     credentials: "include",
@@ -60,12 +59,10 @@ export async function getMe(): Promise<User | null> {
   });
   if (res.status === 200) {
     let data = await res.json();
-    console.log(data);
     return data as User;
   }
   return null;
 }
-
 
 export async function logout(): Promise<boolean> {
   const res = await fetch(`${API_URL}/auth/logout`, {
@@ -182,7 +179,6 @@ export async function estimateItem(categoryId: number, cost: number): Promise<nu
   });
   if (res.status === 200) {
     let data = await res.json();
-    console.log(data);
     return Number(data?.reimbursement);
   }
   return 0;
@@ -228,5 +224,17 @@ export async function getPendingClaims(): Promise<Claim[]> {
     return data as Claim[];
   }
   return [];
+}
+
+export async function approveClaim(claimId: number, accept: boolean): Promise<boolean> {
+  const res = await fetch(`${API_URL}/claims/approve/${claimId}?accept=${accept}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data?.status === "success";
+  }
+  return false;
 }
 

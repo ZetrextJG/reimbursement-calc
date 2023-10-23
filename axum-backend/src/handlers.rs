@@ -137,8 +137,7 @@ pub async fn register_user(
         .map_err(|_| bad_request!("Form failed validation"))?;
 
     let user_exists = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM users WHERE mail = $1 OR username = $2)",
-        body.mail.to_owned().to_ascii_lowercase(),
+        "SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)",
         body.username.to_owned().to_ascii_lowercase()
     )
     .fetch_one(&app_state.pool)

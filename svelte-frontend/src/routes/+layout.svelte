@@ -15,7 +15,6 @@
 	import SignUp from '../components/SignUp.svelte';
 
 	onMount(async () => {
-		console.log(currentUser);
 		currentUser.set(await getMe());
 	});
 
