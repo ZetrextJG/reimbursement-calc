@@ -77,16 +77,16 @@
 							History
 						</a>
 					</li>
-					<!-- <li> -->
-					<!-- 	<a -->
-					<!-- 		href={$currentUser === null ? '' : '/requests'} -->
-					<!-- 		class="nav-btn" -->
-					<!-- 		class:disabled={$currentUser === null} -->
-					<!-- 		class:active={$page.url.pathname === '/requests'} -->
-					<!-- 	> -->
-					<!-- 		Requests -->
-					<!-- 	</a> -->
-					<!-- </li> -->
+					<li>
+						<a
+							href={$currentUser === null ? '' : '/requests'}
+							class="nav-btn"
+							class:disabled={$currentUser === null || $currentUser.role === 'User'}
+							class:active={$page.url.pathname === '/requests'}
+						>
+							Requests
+						</a>
+					</li>
 					<li>
 						<a
 							href="/categories"

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { SiteMode, siteMode } from '$lib/stores';
+	import { popup } from '@skeletonlabs/skeleton';
 	import { signup } from '$lib/api';
 	import { alertVisible } from '$lib/stores';
 	import '../app.postcss';
+	import type { PopupSettings } from '@skeletonlabs/skeleton';
 
 	interface SignupForm {
 		username: string;
@@ -82,6 +84,12 @@
 			alertVisible.set(true);
 		}
 	}
+
+	const violationsPopup: PopupSettings = {
+		event: 'hover',
+		target: 'popupHover',
+		placement: 'bottom'
+	};
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -127,14 +135,21 @@
 					<input
 						id="password"
 						bind:value={currentForm.password}
-						class="input"
+						class="input [&>*]:pointer-events-none"
 						class:passwordViolations
 						class:input-warning={currentForm.password !== '' && passwordViolations !== null}
 						class:input-success={currentForm.password !== '' && passwordViolations === null}
 						data-tooltip={passwordViolations}
+						use:popup={violationsPopup}
 						type="password"
 						placeholder="*****"
 					/>
+					{#if passwordViolations !== null}
+						<div class="card p-4 variant-filled-secondary" data-popup="popupHover">
+							<p>{passwordViolations}</p>
+							<div class="arrow variant-filled-secondary" />
+						</div>
+					{/if}
 				</label>
 				<label for="repPassword" class="label flex flex-col space-y-3 items-start p-3">
 					<span class="text-l pl-3">Repeat password</span>

@@ -286,6 +286,21 @@ pub async fn users_me(
     Ok(Json(user_info))
 }
 
+pub async fn get_user_by_id(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Path(user_id): extract::Path<i32>,
+) -> Result<impl IntoResponse, ErrorResponse> {
+    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", user_id)
+        .fetch_optional(&app_state.pool)
+        .await
+        .map_err(|_| DATABASE_ERROR)?
+        .ok_or(error_response!(
+            StatusCode::NOT_FOUND,
+            "User with this id does not exist"
+        ))?;
+    Ok(Json(user))
+}
+
 pub async fn users_delete_account(
     extract::State(app_state): extract::State<Arc<AppState>>,
     extract::Extension(user): extract::Extension<User>,
@@ -595,6 +610,28 @@ pub async fn list_my_claims(
         Claim,
         "SELECT * FROM claims WHERE user_id = $1 ORDER BY id DESC",
         user.id
+    )
+    .fetch_all(&app_state.pool)
+    .await
+    .map_err(|_| DATABASE_ERROR)?;
+    Ok(Json(claims))
+}
+
+pub async fn list_pedning_claims(
+    extract::State(app_state): extract::State<Arc<AppState>>,
+    extract::Extension(manager): extract::Extension<User>,
+) -> Result<Json<Vec<Claim>>, ErrorResponse> {
+    if manager.role < Role::Manager {
+        return Err(error_response!(
+            StatusCode::FORBIDDEN,
+            "You must be a manager to perform this action"
+        ));
+    }
+
+    let claims = sqlx::query_as!(
+        Claim,
+        "SELECT * FROM claims WHERE status = $1 ORDER BY id ASC",
+        ClaimStatus::Pending.to_string()
     )
     .fetch_all(&app_state.pool)
     .await

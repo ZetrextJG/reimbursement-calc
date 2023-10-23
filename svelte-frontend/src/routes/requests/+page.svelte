@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { getMyClaims } from '$lib/api';
+	import { getPendingClaims } from '$lib/api';
 	import type { Claim } from '$lib/models';
 	import { onMount } from 'svelte';
 
 	let claims: Claim[] = [];
 	onMount(async () => {
-		claims = await getMyClaims();
+		claims = await getPendingClaims();
 	});
 </script>
 

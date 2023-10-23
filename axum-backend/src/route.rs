@@ -26,6 +26,7 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
         .route("/users/list", get(handlers::users_list))
         .route("/users/startswith", get(handlers::users_startswith))
         .route("/users/me", authorized!(get(handlers::users_me)))
+        .route("/users/withid", get(handlers::get_user_by_id))
         .route(
             "/users/delete_account",
             authorized!(delete(handlers::users_delete_account)),
@@ -48,6 +49,10 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
             patch(handlers::update_category),
         )
         .route("/claims/my", authorized!(get(handlers::list_my_claims)))
+        .route(
+            "/claims/pending",
+            authorized!(get(handlers::list_pedning_claims)),
+        )
         .route("/claims/create", authorized!(post(handlers::create_claim)))
         .route(
             "/claims/approve/:claim_id",

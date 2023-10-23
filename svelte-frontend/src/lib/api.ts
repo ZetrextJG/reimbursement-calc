@@ -92,6 +92,18 @@ export async function getUsers(startswith: string): Promise<User[]> {
   return [];
 }
 
+export async function getUserById(id: number): Promise<User | null> {
+  const res = await fetch(`${API_URL}/users/${id}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data as User;
+  }
+  return null;
+}
+
 export async function makeUserManager(userId: number): Promise<boolean> {
   const res = await fetch(`${API_URL}/users/make_manager/${userId}`, {
     method: "GET",
@@ -116,11 +128,6 @@ export async function getCategories(): Promise<Category[]> {
   }
   return [];
 }
-
-// .route(
-//     "/categories/create",
-//     authorized!(post(handlers::create_category)),
-// )
 
 export async function createCategory(name: string, reimbursementPercentage: number, maxReimburstment: number): Promise<boolean> {
   const res = await fetch(`${API_URL}/categories/create`, {
@@ -200,6 +207,19 @@ export async function createClaim(userId: number, items: Item[]): Promise<boolea
 
 export async function getMyClaims(): Promise<Claim[]> {
   const res = await fetch(`${API_URL}/claims/my`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data as Claim[];
+  }
+  return [];
+}
+
+
+export async function getPendingClaims(): Promise<Claim[]> {
+  const res = await fetch(`${API_URL}/claims/pending`, {
     method: "GET",
     credentials: "include",
   });
