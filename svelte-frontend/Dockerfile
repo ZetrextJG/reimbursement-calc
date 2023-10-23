@@ -13,9 +13,11 @@ ENV NODE_ENV production
 RUN npm run build
 
 FROM build AS test
+
 CMD ["npm", "run", "test", "src", "--" ,"--run"]
 
 FROM build AS integration
+
 CMD ["npm", "run", "test", "--" ,"--run"]
 
 FROM nginx:1.19-alpine AS deployment

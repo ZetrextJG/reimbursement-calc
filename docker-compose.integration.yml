@@ -4,6 +4,8 @@ services:
     build:
       context: svelte-frontend
       target: integration
+    environment:
+      - BACKEND_URL=http://axum-backend:8080
     networks:
       - client-side
     ports:
