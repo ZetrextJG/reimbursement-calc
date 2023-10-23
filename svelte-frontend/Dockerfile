@@ -23,8 +23,15 @@ ENV BACKEND_URL=$BACKEND_URL
 
 CMD ["npm", "run", "test", "--" ,"--run"]
 
-FROM nginx:1.19-alpine AS deployment
-ENV NODE_ENV production
+FROM node:20.8-alpine AS deployment
+WORKDIR /app
 
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/package.json ./
+COPY --from=build /app/package-lock.json ./
+
+ENV NODE_ENV production
+RUN npm ci --omit dev
+
+COPY --from=build /app/build ./build
+CMD ["node", "./build"]
 

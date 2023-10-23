@@ -590,10 +590,10 @@ pub async fn approve_claim(
 pub async fn list_my_claims(
     extract::State(app_state): extract::State<Arc<AppState>>,
     extract::Extension(user): extract::Extension<User>,
-) -> Result<Json<Vec<Claim>>, ErrorResponse> {
+) -> Result<impl IntoResponse, ErrorResponse> {
     let claims = sqlx::query_as!(
         Claim,
-        "SELECT * FROM claims WHERE user_id = $1 ORDER BY id DESC",
+        "SELECT * FROM claims WHERE user_id = $1 ORDER BY created_at DESC",
         user.id
     )
     .fetch_all(&app_state.pool)

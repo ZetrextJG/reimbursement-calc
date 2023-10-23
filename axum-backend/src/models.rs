@@ -90,7 +90,9 @@ pub struct Category {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Item {
     pub id: i32,
+    #[serde(rename = "claimId")]
     pub claim_id: i32,
+    #[serde(rename = "categoryId")]
     pub category_id: i32,
     pub cost: Decimal,
     pub reimbursement: Decimal,
@@ -120,10 +122,12 @@ impl ToString for ClaimStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Claim {
     pub id: i32,
+    #[serde(rename = "userId")]
     pub user_id: i32,
+    #[serde(rename = "totalCost")]
     pub total_cost: Option<Decimal>,
     pub reimbursement: Option<Decimal>,
     pub status: ClaimStatus,

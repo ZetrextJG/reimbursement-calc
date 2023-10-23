@@ -39,7 +39,7 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
             authorized!(post(handlers::create_category)),
         )
         .route(
-            "/categories/delete",
+            "/categories/delete/:category_id",
             authorized!(delete(handlers::delete_category)),
         )
         .route("/categories/list", get(handlers::list_categories))
@@ -47,6 +47,7 @@ pub fn create_router(app_state: Arc<AppState>) -> Router {
             "/categories/update/:category_id",
             patch(handlers::update_category),
         )
+        .route("/claims/my", authorized!(get(handlers::list_my_claims)))
         .route("/claims/create", authorized!(post(handlers::create_claim)))
         .route(
             "/claims/approve/:claim_id",

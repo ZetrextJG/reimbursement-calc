@@ -1,9 +1,6 @@
 <script lang="ts">
 	import '../app.postcss';
 
-	import Login from '../components/Login.svelte';
-	import SignUp from '../components/SignUp.svelte';
-
 	import { AppShell, AppBar, type PopupSettings } from '@skeletonlabs/skeleton';
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { onMount } from 'svelte';
@@ -13,6 +10,9 @@
 	import { currentUser, siteMode, SiteMode, alertVisible } from '$lib/stores';
 	import { logout, getMe } from '$lib/api';
 	import { page } from '$app/stores';
+
+	import Login from '../components/Login.svelte';
+	import SignUp from '../components/SignUp.svelte';
 
 	onMount(async () => {
 		console.log(currentUser);
@@ -77,16 +77,16 @@
 							History
 						</a>
 					</li>
-					<li>
-						<a
-							href={$currentUser === null ? '' : '/requests'}
-							class="nav-btn"
-							class:disabled={$currentUser === null}
-							class:active={$page.url.pathname === '/requests'}
-						>
-							Requests
-						</a>
-					</li>
+					<!-- <li> -->
+					<!-- 	<a -->
+					<!-- 		href={$currentUser === null ? '' : '/requests'} -->
+					<!-- 		class="nav-btn" -->
+					<!-- 		class:disabled={$currentUser === null} -->
+					<!-- 		class:active={$page.url.pathname === '/requests'} -->
+					<!-- 	> -->
+					<!-- 		Requests -->
+					<!-- 	</a> -->
+					<!-- </li> -->
 					<li>
 						<a
 							href="/categories"

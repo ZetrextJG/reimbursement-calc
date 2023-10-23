@@ -19,8 +19,7 @@
 	$: isViewerAdmin = $currentUser?.role === 'Admin';
 </script>
 
-<div class="container h-full mx-auto flex justify-center items-center w-3/5">
-	<!-- search the user here -->
+<div class="container h-full mx-auto flex justify-center items-start w-3/5">
 	<div class="flex flex-col bg-surface-800 p-5 w-full">
 		<label for="username" class="label flex flex-col space-y-3 items-start p-3">
 			<span class="text-l pl-3">Username</span>
@@ -29,7 +28,7 @@
 				bind:value={usernameStart}
 				class="input"
 				type="text"
-				placeholder="user"
+				placeholder="User"
 			/>
 		</label>
 		<div class="h-10" />
@@ -44,9 +43,9 @@
 				>
 					<div class="flex flex-row items-center space-x-2 p-2">
 						<Avatar initials={user.username.slice(0, 2)} class="w-11 h-11" alt={user.username} />
-						{#if user.role === 'admin'}
+						{#if user.role === 'Admin'}
 							<p class="md:text-xl text-red-700">{user.role}</p>
-						{:else if user.role == 'manager'}
+						{:else if user.role == 'Manager'}
 							<p class="md:text-xl text-orange-300">{user.role}</p>
 						{:else}
 							<p class="md:text-xl text-gray-300">{user.role}</p>

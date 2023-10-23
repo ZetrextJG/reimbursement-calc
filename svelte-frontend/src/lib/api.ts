@@ -1,10 +1,15 @@
-import type { Category, User } from "./models";
+import type { Category, Claim, User } from "./models";
+import { dev } from '$app/environment';
+import type { Item } from "./models";
+import type { as } from "vitest/dist/reporters-5f784f42";
 
-const API_URL = process.env.BACKEND_URL;
-if (!API_URL) {
-  throw new Error(
-    "Missing environment variable BACKEND_URL."
-  );
+let API_URL = "";
+if (dev) {
+  console.log("Using dev backend");
+  API_URL = "http://localhost:8080";
+} else {
+  console.log("Using prod backend");
+  API_URL = "https://re-calc-backend.fly.dev";
 }
 
 export async function fetchUsersCount() {
@@ -112,6 +117,40 @@ export async function getCategories(): Promise<Category[]> {
   return [];
 }
 
+// .route(
+//     "/categories/create",
+//     authorized!(post(handlers::create_category)),
+// )
+
+export async function createCategory(name: string, reimbursementPercentage: number, maxReimburstment: number): Promise<boolean> {
+  const res = await fetch(`${API_URL}/categories/create`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, reimbursementPercentage, maxReimburstment }),
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data?.status === "success";
+  }
+  return false;
+}
+
+export async function deleteCategory(id: number): Promise<boolean> {
+  const res = await fetch(`${API_URL}/categories/delete/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data?.status === "success";
+  }
+  return false;
+}
+
+
 export async function verifyEmail(code: string): Promise<boolean> {
   const res = await fetch(`${API_URL}/auth/verifyemail/${code}`, {
     method: "GET",
@@ -123,3 +162,51 @@ export async function verifyEmail(code: string): Promise<boolean> {
   }
   return false;
 }
+
+
+export async function estimateItem(categoryId: number, cost: number): Promise<number> {
+  const res = await fetch(`${API_URL}/claims/estimate_item`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ categoryId, cost }),
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    console.log(data);
+    return Number(data?.reimbursement);
+  }
+  return 0;
+}
+
+
+export async function createClaim(userId: number, items: Item[]): Promise<boolean> {
+  const res = await fetch(`${API_URL}/claims/create`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userId, items }),
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data?.status === "success";
+  }
+  return false;
+}
+
+export async function getMyClaims(): Promise<Claim[]> {
+  const res = await fetch(`${API_URL}/claims/my`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (res.status === 200) {
+    let data = await res.json();
+    return data as Claim[];
+  }
+  return [];
+}
+

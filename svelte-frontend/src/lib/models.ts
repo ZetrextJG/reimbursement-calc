@@ -13,3 +13,16 @@ export type Category = {
   reimbursementPercentage: number;
   maxReimburstment: number;
 }
+
+export type Item = {
+  categoryId: number;
+  cost: number;
+}
+
+export type Claim = {
+  id: number;
+  userId: number;
+  totalCost: number;
+  reimbursement: number;
+  status: string;
+}

@@ -77,6 +77,7 @@ fn validate_cost(cost: &Decimal) -> Result<(), ValidationError> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ItemForm {
+    #[serde(rename = "categoryId")]
     pub category_id: i32,
     #[validate(custom = "validate_cost")]
     pub cost: Decimal,
@@ -91,8 +92,8 @@ fn validate_items(items: &[ItemForm]) -> Result<(), ValidationError> {
 
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct ClaimForm {
+    #[serde(rename = "userId")]
     pub user_id: i32,
-    pub auth_token: String,
     #[validate(custom = "validate_items")]
     pub items: Vec<ItemForm>,
 }
