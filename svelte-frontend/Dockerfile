@@ -18,9 +18,13 @@ CMD ["npm", "run", "test", "src", "--" ,"--run"]
 
 FROM build AS integration
 
+ARG BACKEND_URL
+ENV BACKEND_URL=$BACKEND_URL
+
 CMD ["npm", "run", "test", "--" ,"--run"]
 
 FROM nginx:1.19-alpine AS deployment
 ENV NODE_ENV production
+
 COPY --from=build /app/build /usr/share/nginx/html
 
