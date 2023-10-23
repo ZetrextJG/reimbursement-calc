@@ -1,7 +1,11 @@
 import type { Category, User } from "./models";
 
-// const API_URL = "http://localhost:8080"
-const API_URL = "https://re-calc-backend.fly.dev"
+const API_URL = process.env.BACKEND_URL;
+if (!API_URL) {
+  throw new Error(
+    "Missing environment variable BACKEND_URL."
+  );
+}
 
 export async function fetchUsersCount() {
   const res = await fetch(`${API_URL}/users/count`);
